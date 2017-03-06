@@ -20,7 +20,8 @@ askRC = "\x69\x69"
 askATT = "\x6C\x6C"	#MSG ID: 108
 askALT = "\x6D\x6D"	#MSG ID: 109
 ser.open()
-rcData = [1500, 1500, 1500, 1350] #order -> roll, pitch, yaw, throttle
+rcData = [1500, 1500, 1500, 1050] #order -> roll, pitch, yaw, throttle
+auxData = [1500, 1500, 1500, 1050, 1000, 1500, 2000, 1000]
 timeMSP=0.02
 
 #First, run the arm command, then call this command with the desired throttle in the first rcData declaration. it will run for 5 seconds and then turn off.
@@ -136,11 +137,10 @@ def takeoff():
         setRC(rcData)
         time.sleep(timeMSP)
         getRC()
-        
-        
+    
         
 def setRC(data):
-    sendData(8, 200, data)
+    sendData(16, 200, data)
 
 def sendData(data_length, code, data):
 		checksum = 0
@@ -201,6 +201,7 @@ def printTrueRC(response):
     roll=0
     yaw=0
     throttle = 0
+    aux = [2,2,2,2]
     msp_hex = response.encode("hex")
     if msp_hex[10:14] == "":
         print("roll unavailable")
@@ -225,5 +226,12 @@ def printTrueRC(response):
 				
     else:
         throttle = float(littleEndian(msp_hex[22:26]))
+        
+    for i in range(0, 3):
+        if msp_hex[(26+(i*4)):(30+(i*4))] == "":
+    		print("aux" + i + " unavailable")
+    				
+        else:
+            aux[i] = float(littleEndian(msp_hex[(26+(i*4)):(30+(i*4))]))
 				
-    print("roll: " + str(roll) + " " + "pitch: " + str(pitch) + " " + "yaw: " + str(yaw) + " " + "throttle: " + str(throttle))
+    print("roll: " + str(roll) + " " + "pitch: " + str(pitch) + " " + "yaw: " + str(yaw) + " " + "throttle: " + str(throttle) + " aux: " + str(aux))
