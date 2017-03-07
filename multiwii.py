@@ -3,7 +3,6 @@
 import time
 import logging
 import serial
-import threading
 import struct		# for decoding data strings
 
 
@@ -124,6 +123,7 @@ class MultiWii:
 		self.pitch = 0
 		self.yaw = 0
 		self.throttle = 0
+		self.aux = [0,0,0,0]
 		self.angx = 0.0
 		self.angy = 0.0
 		self.m1 = 0
@@ -144,7 +144,7 @@ class MultiWii:
 		self.flytime = 0
 		self.numOfValues = 0
 		self.precision = 3
-		self.rcData = [1500, 1500, 1500, 1250] #order -> roll, pitch, yaw, throttle
+		self.rcData = [1500, 1500, 1500, 1000,1000,1000,1000,1000] #order -> roll, pitch, yaw, throttle, aux1, aux2, aux3, aux4
 	
 		if self.ser.isOpen():
 			print("Wait 5 sec for calibrate Multiwii")
@@ -287,10 +287,17 @@ class MultiWii:
 			else:
 				self.throttle = float(self.littleEndian(msp_hex[22:26]))
 				
-			print("roll: " + str(self.roll) + " " + "pitch: " + str(self.pitch) + " " + "yaw: " + str(self.yaw) + " " + "throttle: " + str(self.throttle))
+			for i in range(0, 3):
+				if msp_hex[(26+(i*4)):(30+(i*4))] == "":
+					print("aux" + i + " unavailable")
+    				
+				else:
+					self.aux[i] = float(self.littleEndian(msp_hex[(26+(i*4)):(30+(i*4))]))
+			
+			print("roll: " + str(self.roll) + " pitch: " + str(self.pitch) + " yaw: " + str(self.yaw) + " throttle: " + str(self.throttle)+ " aux: " + str(self.aux))
 
 	def setRC(self):
-		self.sendData(8, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
 		time.sleep(self.timeMSP)
 		#print self.rcData
 	
