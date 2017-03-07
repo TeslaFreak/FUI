@@ -295,10 +295,32 @@ class MultiWii:
 					self.aux[i] = float(self.littleEndian(msp_hex[(26+(i*4)):(30+(i*4))]))
 			
 			print("roll: " + str(self.roll) + " pitch: " + str(self.pitch) + " yaw: " + str(self.yaw) + " throttle: " + str(self.throttle)+ " aux: " + str(self.aux))
+			
+			
+			return [self.roll,self.pitch,self.yaw,self.throttle,self.aux[0],self.aux[1],self.aux[2],self.aux[3]]
 
 	def setRC(self):
 		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
 		time.sleep(self.timeMSP)
-		#print self.rcData
-	
+		
+	def setAux(self,channel,value):
+		self.rcData[3+channel] = value
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		time.sleep(self.timeMSP)
+	def setRoll(self,value):
+		self.rcData[0] = value
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		time.sleep(self.timeMSP)
+	def setPitch(self,value):
+		self.rcData[1] = value
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		time.sleep(self.timeMSP)
+	def setYaw(self,value):
+		self.rcData[2] = value
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		time.sleep(self.timeMSP)
+	def setThrottle(self,value):
+		self.rcData[3] = value
+		self.sendData(16, self.CMD2CODE["MSP_SET_RAW_RC"], self.rcData)
+		time.sleep(self.timeMSP)
     	
