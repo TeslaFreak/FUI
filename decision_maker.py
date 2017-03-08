@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 06 21:38:55 2017
+#!/usr/bin/python
 
-@author: Chris
-"""
+import rospy
+from std_msgs.msg import String
 
+#desicion maker file
