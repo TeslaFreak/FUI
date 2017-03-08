@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 06 21:39:16 2017
+#!/usr/bin/python
 
-@author: Chris
-"""
+import rospy
+from std_msgs.msg import String
 
+#visual analyzer file
