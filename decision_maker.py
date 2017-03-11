@@ -38,13 +38,17 @@ import time
     # If yes, low volt buzz, flash red light, shut down (shutdown_state = 2 then 3)
     # If no, continue
 
+# look into ROS variables
+
 #Chris sez: you can get gyroscope info thru a command. Google MultiWii Serial Protocol
 #It looks like we'll want to use MSP_RAW_IMU and then mess ith the output until we figure out exactly what its outputting. This function supposedly just returns unitless numbers  
 # http://www.multiwii.com/wiki/index.php?title=Multiwii_Serial_Protocol
+# We may be able to just use ask_rc
+while( askRC(self)[0] is bad or askRC(self)[1] is bad ):
 # while( gyro returns bad angle ) # Use ask_rc? Worried about pitch and roll
     # give "bad status" buzz
     # wait 3 seconds 
-    # timeout = time.time() + 2
+    timeout = time.time() + 2
 
 # Wait 6 seconds, give "ready set go" buzz
 timeout = time.time() + 6
