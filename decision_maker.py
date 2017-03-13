@@ -11,7 +11,6 @@ import time
 from multiwii import MultiWii
 from autoscripts import takeoff
 from autoscripts import land
-import serial
 
 def enum(**enums):
     return type('Enum', (), enums)
@@ -19,14 +18,17 @@ def printstates():
     print("Shutdown state: " )
     return
 
+# rachel : use /dev/tty/USB0
 mw = MultiWii('/dev/ttyUSB0') # pass in the port to create a new multiwii object
 ser=serial.Serial()
 
 # NOTES:
+# TODO Check if Pi has buzzer
 # IMMEDIATE GOAL: Startup scripts and X/Y adjustments
 # QUESTION: What does "Naze sensors good" mean?
 # Call with python2.7 (on rachel's computer: use python2 in /usr/bin/python2)
 # Need to research how to create buzzes. Alternatively the Naze may automatically make different noises as it enters different modes such as its waking up sound
+# TODO Look up ros parameters to figure out state variables
 
 # These vars haven't been set yet but they will be used to tell the drone what state to go into
 shutdown_state = enum(ACTIVE=1, PREPARE_TO_SHUTDOWN=2, SHUTDOWN=3)
@@ -47,18 +49,20 @@ curr_main_state = main_state.PREFLIGHT_CHECKS
     # If no, continue
 
 #Chris sez: you can get gyroscope info thru a command. Google MultiWii Serial Protocol
-#It looks like we'll want to use MSP_RAW_IMU and then mess with the output until we figure out exactly what its outputting. This function supposedly just returns unitless numbers  
+#It looks like we'll want to use MSP_RAW_IMU and then mess with the output until we figure out exactly what its outputting. This function supposedly just returns unitless numbers
 # http://www.multiwii.com/wiki/index.php?title=Multiwii_Serial_Protocol
 gyro_signal = mw.askRC() #askRC from multiwii.py has roll and pitch in 0th and 1st positions
 roll = gyro_signal[0]
 pitch = gyro_signal[1]
+
+
 
 print("Roll: ", roll, "Pitch: ", pitch)
 # TODO: Using arbitrary values, need to test to see what boundaries are acceptable
 while( roll < 1000 or roll > 2000 or pitch < 1000 or pitch > 2000 ):
     print("Gyro returned a bad roll (", roll, ") or pitch (", pitch, "), Give bad status buzz, wait 3 seconds and shut off")
     # give "bad status" buzz
-    # wait 3 seconds 
+    # wait 3 seconds
     timeout = time.time() + 3
 
 # Wait 6 seconds, give "ready set go" buzz
@@ -108,9 +112,10 @@ if( roll < 1000 or roll > 2000 or pitch < 1000 or pitch > 2000 ):
     # curr_main_state = main_state.SHUTDOWN
     # autoscripts.land(mw)
 
+# DEPENDENT ON VISUAL ANALYZER ALGORITHM
 # curr_main_state = main_state.TRACKING_TARGET
-#have_target = 1
-#position = 1
+#have_target = 1 #from visual analyzer
+#position = 1 #from visual analyzer
 #if(!(have target && position == true)):
 # Have target and position == true?
     # print("Do not have target or position != true; enter relocation loop")
