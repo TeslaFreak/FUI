@@ -15,6 +15,9 @@ import serial
 
 def enum(**enums):
     return type('Enum', (), enums)
+def printstates():
+    print("Shutdown state: " )
+    return
 
 mw = MultiWii('/dev/ttyUSB0') # pass in the port to create a new multiwii object
 ser=serial.Serial()
@@ -35,8 +38,8 @@ main_state = enum(PREFLIGHT_CHECKS=1, TAKEOFF=2, TRACKING_TARGET=3, RELOCATING_T
 # PRE TAKE OFF #
 ################
 
-shutdown_state = shutdown_state.ACTIVE
-main_state = main_state.PREFLIGHT_CHECKS
+curr_shutdown_state = shutdown_state.ACTIVE
+curr_main_state = main_state.PREFLIGHT_CHECKS
 
 #IGNORE FOR NOW:
 # Is battery low?
@@ -64,10 +67,11 @@ timeout = time.time() + 6
 
 #Takeoff procedure
 print("Enter takeoff procedure")
-main_state = main_state.TAKEOFF
+curr_main_state = main_state.TAKEOFF
 # Set to hover mode (Use the takeoff(mw) function in autoscripts.py)
 # takeoff(self)
 # go straight up
+curr_main_state = main_state.TRACKING_TARGET
 # find person
 
 #################
@@ -78,8 +82,8 @@ main_state = main_state.TAKEOFF
 # Off signal detected
 #if(off_signal):
     # print("Off signal detected, shut down")
-    # main_state = main_state.PREPARE_TO_SHUTDOWN
-    # main_state = main_state.SHUTDOWN
+    # curr_main_state = main_state.PREPARE_TO_SHUTDOWN
+    # curr_main_state = main_state.SHUTDOWN
     # autoscripts.land(mw)
 
 #IGNORE FOR NOW
@@ -88,8 +92,8 @@ main_state = main_state.TAKEOFF
 #if(low_battery_signal):
     # Yes: Low volt buzz, flash red light
     # print("Low battery detected, give low volt buzz, flash red light, and shut down")
-    # main_state = main_state.PREPARE_TO_SHUTDOWN
-    # main_state = main_state.SHUTDOWN
+    # curr_main_state = main_state.PREPARE_TO_SHUTDOWN
+    # curr_main_state = main_state.SHUTDOWN
     # autoscripts.land(mw)
 
 # Assuming checking roll & pitch will be sufficient to know if the drone is right side up, we can use the same code from earlier
@@ -100,22 +104,25 @@ pitch = gyro_signal[1]
 print("Roll: ", roll, "Pitch: ", pitch)
 if( roll < 1000 or roll > 2000 or pitch < 1000 or pitch > 2000 ):
     print("Drone is not right side up, powering down")
-    # main_state = main_state.PREPARE_TO_SHUTDOWN
-    # main_state = main_state.SHUTDOWN
+    # curr_main_state = main_state.PREPARE_TO_SHUTDOWN
+    # curr_main_state = main_state.SHUTDOWN
     # autoscripts.land(mw)
 
+# curr_main_state = main_state.TRACKING_TARGET
 #have_target = 1
 #position = 1
 #if(!(have target && position == true)):
 # Have target and position == true?
     # print("Do not have target or position != true; enter relocation loop")
+    # curr_main_state = main_state.RELOCATING_TARGET
     # No: Relocation loop
         # Can't find: Shut down (autoscripts.land(mw))
-        # main_state = main_state.PREPARE_TO_SHUTDOWN
-        # main_state = 
+        # curr_shutdown_state = main_state.PREPARE_TO_SHUTDOWN
+        # curr_shutdown_state = main_state.SHUTDOWN
         # If found it, return to have target and position == true
    # If yes, continue
 
+# curr_main_state = main_state.TRACKING_TARGET
 # Check where in frame target is
 # Update that position, current position, last velocity and current velocity
 
