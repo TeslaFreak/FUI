@@ -3,6 +3,7 @@
 """multiwii.py: Handles Multiwii Serial Protocol."""
 
 __author__ = "Aldo Vargas"
+__updatedBy__ = "Chris Allmon"
 __copyright__ = "Copyright 2017 Altax.net"
 
 __license__ = "GPL"
@@ -59,8 +60,7 @@ class MultiWii:
     def __init__(self, serPort):
 
         """Global variables of data"""
-        self.rcChannels = {'roll':0,'pitch':0,'yaw':0,'throttle':0,'elapsed':0,'timestamp':0}
-        self.rcData = [1500,1500,1500,1250]
+        self.rcChannels = {'roll':0,'pitch':0,'yaw':0,'throttle':0, 'aux1':0, 'aux2':0, 'aux3':0, 'aux4':0, 'elapsed':0,'timestamp':0}
         self.rawIMU = {'ax':0,'ay':0,'az':0,'gx':0,'gy':0,'gz':0,'mx':0,'my':0,'mz':0,'elapsed':0,'timestamp':0}
         self.motor = {'m1':0,'m2':0,'m3':0,'m4':0,'elapsed':0,'timestamp':0}
         self.attitude = {'angx':0,'angy':0,'heading':0,'elapsed':0,'timestamp':0}
@@ -69,6 +69,7 @@ class MultiWii:
         self.temp2 = ();
         self.elapsed = 0
         self.PRINT = 1
+        self.timeMSP=0.02
 
         self.ser = serial.Serial()
         self.ser.port = serPort
@@ -97,9 +98,6 @@ class MultiWii:
             print "\n\nError opening "+self.ser.port+" port.\n"+str(error)+"\n\n"
 
 
-
-    def setRC(self, data):
-        self.sendCMD(8, 200, data)
     
     """Function for sending a command to the board"""
     def sendCMD(self, data_length, code, data):
@@ -109,12 +107,15 @@ class MultiWii:
             checksum = checksum ^ ord(i)
         total_data.append(checksum)
         try:
+            self.ser.flushInput()
+            self.ser.flushOutput()
             b = None
             b = self.ser.write(struct.pack('<3c2B%dhB' % len(data), *total_data))
         except Exception, error:
-            #print "\n\nError in sendCMD."
-            #print "("+str(error)+")\n\n"
+            print "\n\nError in sendCMD."
+            print "("+str(error)+")\n\n"
             pass
+        time.sleep(self.timeMSP)
 
     """Function for sending a command to the board and receive attitude"""
     """
@@ -156,8 +157,8 @@ class MultiWii:
             self.attitude['timestamp']="%0.2f" % (time.time(),) 
             return self.attitude
         except Exception, error:
-            #print "\n\nError in sendCMDreceiveATT."
-            #print "("+str(error)+")\n\n"
+            print "\n\nError in sendCMDreceiveATT."
+            print "("+str(error)+")\n\n"
             pass
 
     """Function to arm / disarm """
@@ -180,6 +181,9 @@ class MultiWii:
             time.sleep(0.05)
             timer = timer + (time.time() - start)
             start =  time.time()
+        #set values back to normal, so yaw doesnt accidently get left low and try to death spiral later down the line
+        data = [1500,1500,1500,1000]
+        self.sendCMD(8,MultiWii.SET_RAW_RC,data)
 
     def disarm(self):
         timer = 0
@@ -190,11 +194,16 @@ class MultiWii:
             time.sleep(0.05)
             timer = timer + (time.time() - start)
             start =  time.time()
+        #set values back to normal, so yaw doesnt accidently get left high and try to death spiral later down the line
+        data = [1500,1500,1500,1000]
+        self.sendCMD(8,MultiWii.SET_RAW_RC,data)
 
     """Function to receive a data packet from the board"""
     def getData(self, cmd):
         try:
             start = time.time()
+            self.ser.flushInput()
+            self.ser.flushOutput()
             self.sendCMD(0,cmd,[])
             while True:
                 header = self.ser.read()
@@ -220,6 +229,10 @@ class MultiWii:
                 self.rcChannels['pitch']=temp[1]
                 self.rcChannels['yaw']=temp[2]
                 self.rcChannels['throttle']=temp[3]
+                self.rcChannels['aux1']=temp[4]
+                self.rcChannels['aux2']=temp[5]
+                self.rcChannels['aux3']=temp[6]
+                self.rcChannels['aux4']=temp[7]
                 self.rcChannels['elapsed']=round(elapsed,3)
                 self.rcChannels['timestamp']="%0.2f" % (time.time(),)
                 return self.rcChannels
@@ -249,6 +262,7 @@ class MultiWii:
         except Exception, error:
             #print error
             pass
+        time.sleep(self.timeMSP)
 
     """Function to receive a data packet from the board. Note: easier to use on threads"""
     def getDataInf(self, cmd):
@@ -346,3 +360,40 @@ class MultiWii:
                 return "No return error!"
         except Exception, error:
             print error
+            
+            
+    #List of convenience functions to make setting single values easier
+    def setRC(self, data):
+        self.sendCMD(8, 200, data)  
+        
+    def setAux(self,channel,value):
+        self.getData(self.RC)
+        data = [self.rcChannels["roll"],self.rcChannels["pitch"],self.rcChannels["yaw"],self.rcChannels["throttle"],
+                self.rcChannels["aux1"], self.rcChannels["aux2"], self.rcChannels["aux3"], self.rcChannels["aux4"]]
+        data[3+channel] = value
+        self.sendCMD(16, self.SET_RAW_RC, data)
+        
+    def setRoll(self,value):
+        self.getData(self.RC)
+        data = [self.rcChannels["roll"],self.rcChannels["pitch"],self.rcChannels["yaw"],self.rcChannels["throttle"]]
+        data[0] = value
+        self.sendCMD(8, self.SET_RAW_RC, data)
+        
+    def setPitch(self,value):
+        self.getData(self.RC)
+        data = [self.rcChannels["roll"],self.rcChannels["pitch"],self.rcChannels["yaw"],self.rcChannels["throttle"]]
+        data[1] = value
+        self.sendCMD(8, self.SET_RAW_RC, data)
+        
+    def setYaw(self,value):
+        self.getData(self.RC)
+        data = [self.rcChannels["roll"],self.rcChannels["pitch"],self.rcChannels["yaw"],self.rcChannels["throttle"]]
+        data[2] = value
+        self.sendCMD(8, self.SET_RAW_RC, data)
+        
+    def setThrottle(self,value):
+        self.getData(self.RC)
+        data = [self.rcChannels["roll"],self.rcChannels["pitch"],self.rcChannels["yaw"],self.rcChannels["throttle"]]
+        data[3] = value
+        self.sendCMD(8, self.SET_RAW_RC, data)
+        
