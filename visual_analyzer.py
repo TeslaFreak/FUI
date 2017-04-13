@@ -40,6 +40,11 @@ relocating = 4
 
 target_position = 'Target_Position'
 
+def debugImage(frame):
+	cv2.imshow("Frame", frame)
+	key = cv2.waitKey(1) & 0xFF
+	if key == ord("q"):
+		cv2.destroyAllWindows()
 #finds and returns the x and y coordinates of the rectangle closest to the center of the image 
 def find_master(img, rects):
 	currX = NO_X
@@ -56,10 +61,10 @@ def find_master(img, rects):
 		
 def find_target(frame):
 	found,w=hog.detectMultiScale(frame)
-
+	
 	# check to see if the frame should be displayed to our screen
 	draw_detections(frame,found)	
-	cv2.imshow("Frame", frame)
+	debugImage(frame)
 
 	find_master(frame, found)
 
@@ -76,6 +81,7 @@ def shutdown():
 def initial_startup():
 	while foundTarget == False:
 		frame = vs.read()
+		cv2.imshow("Frame", frame)
 		find_target(frame)
 		#if (time = maxTime)
 			#shutdown()
@@ -154,12 +160,9 @@ while True:
 
 				#find_target off frame
 				find_target(frame)
-
-	cv2.imshow("Frame", frame)
-	key = cv2.waitKey(1) & 0xFF
-	if key == ord("q"):
-		break
-
+	
+	debugImage(frame)
+	
 # do a bit of cleanup
 cv2.destroyAllWindows()
 vs.stop()
